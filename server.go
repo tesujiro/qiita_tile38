@@ -32,9 +32,9 @@ func main() {
 }
 
 func (s *server) routes() {
-	s.router.HandleFunc("/", s.handleDefault())
-	s.router.HandleFunc("/greet", s.handleHello())
-	s.router.HandleFunc("/portal", s.portal())
+	//s.router.HandleFunc("/", s.handleDefault())
+	//s.router.HandleFunc("/greet", s.handleHello())
+	//s.router.HandleFunc("/portal", s.portal())
 	s.router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./public"))))
 }
 

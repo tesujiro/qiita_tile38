@@ -17,9 +17,11 @@
 	<table border="0">
 		<tr>
 			<tr><td><input type="button" value="Reset" onClick="delShapes()"></td></tr>
-			<tr><td><input type="button" value="Show1" onClick="show1()"></td></tr>
-			<tr><td><input type="button" value="Show2" onClick="show2()"></td></tr>
-			<tr><td><input type="button" value="Show3" onClick="show3()"></td></tr>
+			<tr><td><input type="button" value="Show1-1" onClick="show1_1()"></td></tr>
+			<tr><td><input type="button" value="Show1-2" onClick="show1_2()"></td></tr>
+			<tr><td><input type="button" value="Show1-3" onClick="show1_3()"></td></tr>
+			<tr><td><input type="button" value="Show2-1" onClick="show2_1()"></td></tr>
+			<tr><td><input type="button" value="Show2-2" onClick="show2_2()"></td></tr>
 		</tr>
 	</table>
 </form>
@@ -41,7 +43,6 @@ var initMap = function() {
 
 initMap();
 
-//var marker;
 var shapes = [];
 var showShapes = function(){
 	console.log("show shapes");
@@ -64,7 +65,7 @@ var delShapes = function(){
 	}
 }
 
-var show1 = function(){
+var show1_1 = function(){
 	delShapes();
 	console.log(map_center);
 	var marker = new L.marker(map_center)
@@ -72,7 +73,7 @@ var show1 = function(){
 	addShape(marker);
 }
 
-var show2 = function(){
+var show1_2 = function(){
 	delShapes();
 	var points = [
 		{label:"現在地", lat: map_center[0], lng: map_center[1]},
@@ -91,8 +92,8 @@ var show2 = function(){
 	return points;
 }
 
-var show3 = function(){
-	points = show2();
+var show1_3 = function(){
+	points = show1_2();
 	current = points[0];
 	distance = 100;
 	let circle = L.circle([current.lat, current.lng], distance, {
@@ -104,33 +105,83 @@ var show3 = function(){
 	addShape(circle);
 }
 
-/*
-	L.circle([51.508, -0.11], 500, {
-		color: 'red',
-		fillColor: '#f03',
-		fillOpacity: 0.5
-	}).addTo(mymap).bindPopup("I am a circle.");
+var show2_shapes = [
+	{type:'CIRCLE', label:'現在地', lat: map_center[0], lng: map_center[1], distance: 120, color: 'blue'},
+	{type:'POINT', label:'現在地', lat: map_center[0], lng: map_center[1], color: 'blue'},
+	{type:'BOUNDS', label:'境界X', south:35.6578, east:139.6971, north:35.6581, west:139.6968, color: 'blue'},
+	{type:'BOUNDS', label:'境界Y', south:35.6572, east:139.6984, north:35.6575, west:139.6978, color: 'red'},
+	{type:'BOUNDS', label:'境界Z', south:35.6590, east:139.6967, north:35.6594, west:139.6959, color: 'red'},
+	//{type:'POINT', label:'点A', lat: 35.6586, lng: 139.6982, color: 'blue'},
+	//{type:'POINT', label:'点B', lat: 35.6570, lng: 139.6967, color: 'blue'},
+];
 
+var show2_draw = function(shape){
+	switch(shape.type){
+		case 'POINT':
+			point = shape;
+			let marker = new L.marker([point.lat,point.lng])
+				.bindTooltip(point.label , { permanent: true, direction:'right' });
+			//console.log(marker);
+			addShape(marker);
+			break;
+		case 'CIRCLE':
+			let circle = L.circle([shape.lat, shape.lng],shape.distance, {
+				color: shape.color,
+				fillColor: shape.color,
+				fillOpacity: 0.3
+			})
+				.bindTooltip('半径'+shape.distance+'メートル以内', { permanent: true, direction:'auto', offset:L.point(-50,-50) });
+			addShape(circle);
+			break;
+		case 'BOUNDS':
+			bounds = shape;
+			let polygon = new L.polygon([
+				[bounds.south,bounds.west],
+				[bounds.south,bounds.east],
+				[bounds.north,bounds.east],
+				[bounds.north,bounds.west],
+				[bounds.south,bounds.west]
+			],{
+				color: bounds.color,
+				fillColor: bounds.color,
+				fillOpacity: 0.3
+			}).bindTooltip(bounds.label, { permanent: true, direction:'auto', offset:L.point(10,10), opacity:0.8});
+			addShape(polygon);
+			break;
+		default:
+			console.log('ERROR: shape.type:'+shape.type+' not defined.')
+	}
+}
+
+var show2_1 = function(){
+	delShapes();
+	for (i in show2_shapes){
+		shape = show2_shapes[i];
+		show2_draw(shape);
+	}
+	return;
+}
+
+var show2_2 = function(){
+	delShapes();
+	var backup = show2_shapes[3].color
+	show2_shapes[3].color='blue';
+	for (i in show2_shapes){
+		shape = show2_shapes[i];
+		show2_draw(shape);
+	}
+	show2_shapes[3].color=backup;
+	return;
+}
+
+/*
 	L.polygon([
 		[51.509, -0.08],
 		[51.503, -0.06],
 		[51.51, -0.047]
 	]).addTo(mymap).bindPopup("I am a polygon.");
-
-
-	var popup = L.popup();
-
-	function onMapClick(e) {
-		popup
-			.setLatLng(e.latlng)
-			.setContent("You clicked the map at " + e.latlng.toString())
-			.openOn(mymap);
-	}
-
-	mymap.on('click', onMapClick);
 */
 
 </script>
 </body>
 </html>
-
