@@ -3,9 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-
-	"github.com/garyburd/redigo/redis"
+	"reflect"
 )
 
 type ObjectType int
@@ -42,7 +40,27 @@ type GeoJsonMember struct {
 
 type Point [2]float64
 
+func (p Point) String() string {
+	return fmt.Sprintf("[%v %v]", p[0], p[1])
+}
+
 type LineString []Point
+
+/*
+func (s LineString) String() string {
+	var helper func(LineString) string
+	helper = func(a LineString) string {
+		if len(a) == 0 {
+			return ""
+		}
+		return fmt.Sprintf(" %s%s", a[0], helper(a[1:]))
+	}
+	if len(s) == 0 {
+		return "[]"
+	}
+	return fmt.Sprintf("[%v%v]", s[0], helper(s[1:]))
+}
+*/
 
 type Polygon []LineString
 
@@ -124,7 +142,7 @@ func (member *GeoJsonMember) setCoordinatesObject() error {
 func (member *GeoJsonMember) String() string {
 	switch member.ObjectType {
 	case GeometryObject:
-		return fmt.Sprintf("type:%v coordinates:%v", member.Type, member.CoordinatesObject)
+		return fmt.Sprintf("type:%v coordinates:%v", member.Type, reflect.ValueOf(member.CoordinatesObject).Elem())
 	case FeatureObject:
 		geometry, err := NewGeoJsonMember(member.Geometry)
 		if err != nil {
@@ -132,11 +150,11 @@ func (member *GeoJsonMember) String() string {
 		}
 		return fmt.Sprintf("type:%v geometry:%v properties:%v", member.Type, geometry, member.Properties)
 	default:
-		return "Unknown Object Type"
+		return fmt.Sprintf("Unknown Object Type:%v", member.ObjectType)
 	}
 }
 
-func unmarshalGeoJson() {
+func main() {
 	var shapes = []byte(`[
 	{"type": "Point", "coordinates": [1.23, 4.56]},
 	{"type": "LineString", "coordinates": [[1.23, 4.56],[7.89,10.12]]},
@@ -152,29 +170,4 @@ func unmarshalGeoJson() {
 	for i, m := range members {
 		fmt.Printf("member[%v]:%v\n", i, m)
 	}
-}
-
-func main() {
-	// db connect
-	c, err := redis.Dial("tcp", ":9851")
-	if err != nil {
-		log.Fatalf("Could not connect: %v\n", err)
-	}
-	defer c.Close()
-
-	// SET location
-	ret, err := c.Do("SET", "location", "me", "POINT", 35.6581, 139.6975)
-	if err != nil {
-		log.Fatalf("Could not SET: %v\n", err)
-	}
-	fmt.Printf("SET ret:%s\n", ret)
-
-	// GET location
-	ret, err = c.Do("GET", "location", "me")
-	if err != nil {
-		log.Fatalf("Could not GET: %v\n", err)
-	}
-	fmt.Printf("GET ret:%s\n", ret)
-
-	unmarshalGeoJson()
 }
