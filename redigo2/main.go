@@ -70,15 +70,9 @@ func NewGeoJsonMember(b []byte) (*GeoJsonMember, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unmarshal error: %v", err)
 	}
-	err = member.setObjectType()
+	err = member.setProperties()
 	if err != nil {
-		return nil, err
-	}
-	if member.ObjectType == GeometryObject {
-		err := member.setCoordinatesObject()
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("%v:%v", err, member)
 	}
 	return &member, nil
 }
@@ -90,18 +84,26 @@ func NewGeoJsonMembers(b []byte) ([]*GeoJsonMember, error) {
 		return nil, err
 	}
 	for _, member := range members {
-		err := member.setObjectType()
+		err := member.setProperties()
 		if err != nil {
 			return nil, fmt.Errorf("%v:%v", err, member)
 		}
-		if member.ObjectType == GeometryObject {
-			err := member.setCoordinatesObject()
-			if err != nil {
-				return nil, err
-			}
-		}
 	}
 	return members, nil
+}
+
+func (member *GeoJsonMember) setProperties() error {
+	err := member.setObjectType()
+	if err != nil {
+		return fmt.Errorf("%v:%v", err, member)
+	}
+	if member.ObjectType == GeometryObject {
+		err := member.setCoordinatesObject()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (member *GeoJsonMember) setObjectType() error {
