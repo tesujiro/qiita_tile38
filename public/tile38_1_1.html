@@ -22,6 +22,7 @@
 			<tr><td><input type="button" value="Show1-3" onClick="show1_3()"></td></tr>
 			<tr><td><input type="button" value="Show2-1" onClick="show2_1()"></td></tr>
 			<tr><td><input type="button" value="Show2-2" onClick="show2_2()"></td></tr>
+			<tr><td><input type="button" value="Show2-3" onClick="show2_3()"></td></tr>
 		</tr>
 	</table>
 </form>
@@ -105,19 +106,7 @@ var show1_3 = function(){
 	addShape(circle);
 }
 
-var show2_shapes = function(){
-	return [
-		{type:'CIRCLE', label:'現在地', lat: map_center[0], lng: map_center[1], distance: 120, color: 'blue'},
-		{type:'POINT', label:'現在地', lat: map_center[0], lng: map_center[1], color: 'blue'},
-		{type:'BOUNDS', label:'境界X', south:35.6578, east:139.6971, north:35.6581, west:139.6968, color: 'blue'},
-		{type:'BOUNDS', label:'境界Y', south:35.6572, east:139.6984, north:35.6575, west:139.6978, color: 'red'},
-		{type:'BOUNDS', label:'境界Z', south:35.6590, east:139.6967, north:35.6594, west:139.6959, color: 'red'},
-		//{type:'POINT', label:'点A', lat: 35.6586, lng: 139.6982, color: 'blue'},
-		//{type:'POINT', label:'点B', lat: 35.6570, lng: 139.6967, color: 'blue'},
-	];
-}
-
-var show2_draw = function(shape){
+var draw_shape = function(shape){
 	switch(shape.type){
 		case 'POINT':
 			point = shape;
@@ -125,6 +114,14 @@ var show2_draw = function(shape){
 				.bindTooltip(point.label , { permanent: true, direction:'right' });
 			//console.log(marker);
 			addShape(marker);
+			break;
+		case 'POLYLINE':
+			let polyline = new L.polyline(shape.coordinates,{
+				color: shape.color,
+				fillColor: shape.color,
+				fillOpacity: 0.3
+			}).bindTooltip(shape.label, { permanent: true, direction:'auto', offset:L.point(0,0), opacity:0.8});
+			addShape(polyline);
 			break;
 		case 'CIRCLE':
 			let circle = L.circle([shape.lat, shape.lng],shape.distance, {
@@ -136,18 +133,25 @@ var show2_draw = function(shape){
 			addShape(circle);
 			break;
 		case 'BOUNDS':
-			bounds = shape;
-			let polygon = new L.polygon([
-				[bounds.south,bounds.west],
-				[bounds.south,bounds.east],
-				[bounds.north,bounds.east],
-				[bounds.north,bounds.west],
-				[bounds.south,bounds.west]
+			let bounds = new L.polygon([
+				[shape.south,shape.west],
+				[shape.south,shape.east],
+				[shape.north,shape.east],
+				[shape.north,shape.west],
+				[shape.south,shape.west]
 			],{
-				color: bounds.color,
-				fillColor: bounds.color,
+				color: shape.color,
+				fillColor: shape.color,
 				fillOpacity: 0.3
-			}).bindTooltip(bounds.label, { permanent: true, direction:'auto', offset:L.point(10,10), opacity:0.8});
+			}).bindTooltip(shape.label, { permanent: true, direction:'auto', offset:L.point(10,10), opacity:0.8});
+			addShape(bounds);
+			break;
+		case 'POLYGON':
+			let polygon = new L.polygon(shape.coordinates,{
+				color: shape.color,
+				fillColor: shape.color,
+				fillOpacity: 0.3
+			}).bindTooltip(shape.label, { permanent: true, direction:'auto', offset:L.point(-20,-30), opacity:0.8});
 			addShape(polygon);
 			break;
 		default:
@@ -155,23 +159,85 @@ var show2_draw = function(shape){
 	}
 }
 
+var shapes_example_1 = function(){
+	return [
+		{type:'CIRCLE', label:'現在地', lat: map_center[0], lng: map_center[1], distance: 120, color: 'blue'},
+		{type:'POINT', label:'現在地', lat: map_center[0], lng: map_center[1], color: 'blue'},
+		{type:'BOUNDS', label:'境界X', south:35.6578, east:139.6971, north:35.6581, west:139.6968, color: 'blue'},
+		{type:'BOUNDS', label:'境界Y', south:35.6572, east:139.6984, north:35.6575, west:139.6978, color: 'red'},
+		{type:'BOUNDS', label:'境界Z', south:35.6590, east:139.6967, north:35.6594, west:139.6959, color: 'red'},
+		//{type:'POINT', label:'点A', lat: 35.6586, lng: 139.6982, color: 'blue'},
+		//{type:'POINT', label:'点B', lat: 35.6570, lng: 139.6967, color: 'blue'},
+	];
+}
+
 var show2_1 = function(){
 	delShapes();
-	var shapes = show2_shapes();
+	var shapes = shapes_example_1();
 	for (i in shapes){
 		shape = shapes[i];
-		show2_draw(shape);
+		draw_shape(shape);
 	}
 	return;
 }
 
 var show2_2 = function(){
 	delShapes();
-	var shapes = show2_shapes();
+	var shapes = shapes_example_1();
 	shapes[3].color='blue';
 	for (i in shapes){
 		shape = shapes[i];
-		show2_draw(shape);
+		draw_shape(shape);
+	}
+	return;
+}
+
+var shapes_example_2 = function(){
+	return [
+		{type:'POLYGON', label:'現在地', color: 'green', coordinates:[
+			[35.6590,139.6982],
+			[35.6589,139.6978],
+			[35.6577,139.6965],
+			[35.6574,139.6964],
+			[35.6572,139.6966],
+			[35.6575,139.6973],
+			[35.6580,139.6988],
+			[35.6587,139.6984],
+			[35.6590,139.6982],
+		]},
+		{type:'POLYLINE', label:'道路R', color: 'red', coordinates:[
+			[35.6584,139.6954],
+			//[35.6577,139.6959],
+			//[35.6571,139.6965],
+			[35.6567,139.6970],
+		]},
+		{type:'POLYLINE', label:'道路S', color: 'blue', coordinates:[
+			[35.6585,139.6994],
+			[35.6575,139.6953],
+		]},
+		{type:'POLYGON', label:'ポリゴンP', color: 'blue', coordinates:[
+			[35.6587,139.6984],
+			[35.6590,139.6983],
+			[35.6589,139.6979],
+			[35.6586,139.6980],
+			[35.6587,139.6984],
+		]},
+		{type:'POLYGON', label:'ポリゴンQ', color: 'red', coordinates:[
+			[35.6591,139.6967],
+			[35.6595,139.6960],
+			[35.6589,139.6958],
+			[35.6586,139.6965],
+			[35.6591,139.6967],
+		]},
+	];
+}
+
+var show2_3 = function(){
+	delShapes();
+	var shapes = shapes_example_2();
+	for (i in shapes){
+		shape = shapes[i];
+		draw_shape(shape);
 	}
 	return;
 }
