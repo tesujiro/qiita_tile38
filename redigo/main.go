@@ -32,11 +32,12 @@ const (
 */
 
 type GeoJsonMember struct {
-	ObjectType  ObjectType        `json:"-"`
-	Type        string            `json:"type"`
-	Coordinates json.RawMessage   `json:"coordinates,omitempty"`
-	Geometry    json.RawMessage   `json:"geometry,omitempty"`
-	Properties  map[string]string `json:"properties,omitempty"`
+	ObjectType        ObjectType        `json:"-"`
+	Type              string            `json:"type"`
+	CoordinatesRaw    json.RawMessage   `json:"coordinates,omitempty"`
+	CoordinatesObject interface{}       `json:"-"`
+	Geometry          json.RawMessage   `json:"geometry,omitempty"`
+	Properties        map[string]string `json:"properties,omitempty"`
 }
 
 type Point [2]float64
@@ -55,6 +56,12 @@ func NewGeoJsonMember(b []byte) (*GeoJsonMember, error) {
 	if err != nil {
 		return nil, err
 	}
+	if member.ObjectType == GeometryObject {
+		err := member.setCoordinatesObject()
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &member, nil
 }
 
@@ -68,6 +75,12 @@ func NewGeoJsonMembers(b []byte) ([]*GeoJsonMember, error) {
 		err := member.setObjectType()
 		if err != nil {
 			return nil, fmt.Errorf("%v:%v", err, member)
+		}
+		if member.ObjectType == GeometryObject {
+			err := member.setCoordinatesObject()
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return members, nil
@@ -87,15 +100,31 @@ func (member *GeoJsonMember) setObjectType() error {
 	return nil
 }
 
+func (member *GeoJsonMember) setCoordinatesObject() error {
+	var object interface{}
+	switch member.Type {
+	case "Point":
+		object = new(Point)
+	case "LineString":
+		object = new(LineString)
+	case "Polygon":
+		object = new(Polygon)
+	default:
+		return fmt.Errorf("Unknown type: %v", member.Type)
+	}
+	err := json.Unmarshal(member.CoordinatesRaw, &object)
+	if err != nil {
+		return fmt.Errorf("Unmarshal error:%v coordinates:%s", err, member.CoordinatesRaw)
+	}
+	//fmt.Printf("object:%v\n", object)
+	member.CoordinatesObject = object
+	return nil
+}
+
 func (member *GeoJsonMember) String() string {
 	switch member.ObjectType {
 	case GeometryObject:
-		var dst interface{}
-		err := json.Unmarshal(member.Coordinates, &dst)
-		if err != nil {
-			return fmt.Sprintf("GeoJsonMember.String() json.Unmarshal error:%v coordinates:%s", err, member.Coordinates)
-		}
-		return fmt.Sprintf("type:%v coordinates:%v", member.Type, dst)
+		return fmt.Sprintf("type:%v coordinates:%v", member.Type, member.CoordinatesObject)
 	case FeatureObject:
 		geometry, err := NewGeoJsonMember(member.Geometry)
 		if err != nil {
