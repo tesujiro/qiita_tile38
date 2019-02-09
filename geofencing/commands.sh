@@ -15,7 +15,7 @@ commands(){
 DROP intruder
 #
 SET intruder point:X POINT 35.6578 139.6971
-SETHOOK alert $API_ENDPOINT NEARBY intruder FENCE DETECT inside POINT 35.6580 139.6970 100
+SETHOOK alert $API_ENDPOINT NEARBY intruder FENCE DETECT inside POINT 35.6580 139.6970 50
 SET intruder point:X POINT 35.6581 139.6968
 EOF
 }
@@ -24,5 +24,6 @@ EOF
 commands | while read line
 do
 	exec_tile38_cli "$line"
+	sleep 1
 done
 

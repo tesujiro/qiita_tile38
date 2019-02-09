@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type server struct {
@@ -31,7 +34,28 @@ func (s *server) routes() {
 func (s *server) handleWebhook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received Webhook request!\n")
-		log.Printf("Request: %#v", r)
+
+		length, err := strconv.Atoi(r.Header.Get("Content-Length"))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		body := make([]byte, length)
+		length, err = r.Body.Read(body)
+		if err != nil && err != io.EOF {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var jsonBody map[string]interface{}
+		err = json.Unmarshal(body[:length], &jsonBody)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		log.Printf("Request.Body: %v", jsonBody)
+
 		fmt.Fprintf(w, "Hello, World")
 	}
 }
