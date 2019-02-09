@@ -23,6 +23,7 @@
 			<tr><td><input type="button" value="Show2-1" onClick="show2_1()"></td></tr>
 			<tr><td><input type="button" value="Show2-2" onClick="show2_2()"></td></tr>
 			<tr><td><input type="button" value="Show2-3" onClick="show2_3()"></td></tr>
+			<tr><td><input type="button" value="Show3-1 WebHook" onClick="show3_1()"></td></tr>
 		</tr>
 	</table>
 </form>
@@ -40,6 +41,10 @@ var initMap = function() {
 			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
 		id: 'mapbox.streets'
 	}).addTo(mymap);
+	accuracy=100000;
+	mymap.on('click', function(e) {
+		console.log("{ lat:" + Math.round(e.latlng.lat*accuracy)/accuracy + ", lng:" + Math.round(e.latlng.lng*accuracy)/accuracy+", hook:false },");
+	});
 }
 
 initMap();
@@ -240,6 +245,116 @@ var show2_3 = function(){
 		draw_shape(shape);
 	}
 	return;
+}
+
+var animation = [];
+
+var addAnimation = function(shape,timer,sticky){
+	//shape.addTo(mymap);
+	console.log("push animation");
+	animation.push({shape:shape,timer:timer,sticky:sticky});
+}
+
+var showAnimation = function(){
+	if (animation.length>0){
+		animation[0].shape.addTo(mymap)
+		setTimeout(function(){
+			if(!animation[0].sticky) mymap.removeLayer(animation[0].shape);
+			animation.shift();
+			showAnimation();
+		},animation[0].timer);
+	}
+}
+
+var	mess = [
+	{ lat:35.65949, lng:139.69963, hook:false },
+	{ lat:35.65946, lng:139.69947, hook:false },
+	{ lat:35.65944, lng:139.69932, hook:false },
+	{ lat:35.65936, lng:139.69909, hook:false },
+	{ lat:35.65932, lng:139.69893, hook:false },
+	{ lat:35.65929, lng:139.69879, hook:false },
+	{ lat:35.65923, lng:139.69860, hook:false },
+	{ lat:35.65917, lng:139.69836, hook:false },
+	{ lat:35.65914, lng:139.69821, hook:false },
+	{ lat:35.65908, lng:139.69801, hook:false },
+	{ lat:35.65899, lng:139.69769, hook:true },
+	{ lat:35.65891, lng:139.69755, hook:true },
+	{ lat:35.65889, lng:139.69750, hook:true },
+	{ lat:35.65882, lng:139.69740, hook:true },
+	{ lat:35.65873, lng:139.69731, hook:true },
+	{ lat:35.65868, lng:139.69723, hook:true },
+	{ lat:35.65860, lng:139.69718, hook:true },
+	{ lat:35.65849, lng:139.69705, hook:true },
+	{ lat:35.65841, lng:139.69689, hook:true },
+	{ lat:35.65828, lng:139.69679, hook:true },
+	{ lat:35.65817, lng:139.69670, hook:true },
+	{ lat:35.65809, lng:139.69664, hook:true },
+	{ lat:35.65794, lng:139.69653, hook:false },
+	{ lat:35.65778, lng:139.69642, hook:false },
+	{ lat:35.65764, lng:139.69629, hook:false },
+	{ lat:35.65753, lng:139.69619, hook:false },
+	{ lat:35.65745, lng:139.69615, hook:false },
+	{ lat:35.65733, lng:139.69605, hook:false },
+	{ lat:35.65725, lng:139.69600, hook:false },
+	{ lat:35.65716, lng:139.69596, hook:false },
+	{ lat:35.65703, lng:139.69588, hook:false },
+	{ lat:35.65691, lng:139.69576, hook:false }
+]
+
+var show3_1 = function(){
+	delShapes();
+	//points = show1_2();
+	current = {label:"現在地", lat: map_center[0], lng: map_center[1]};
+	distance = 100;
+	makeCircle = function(distance) {
+		return L.circle([current.lat, current.lng], distance, {
+			color: 'blue',
+			fillColor: '#0000ff',
+			fillOpacity: 0.3
+		});
+	}
+
+	addAnimation(makeCircle(0),300,false);
+	for (var i= 0;i<distance;i++) {
+		addAnimation(makeCircle(i),10,false);
+	}
+	
+	addAnimation(
+		makeCircle(distance)
+		.bindTooltip("半径"+distance+"メートル以内", { permanent: true, direction:'auto', offset:L.point(-50,-50) }),1000,true);
+
+	makeWalker = function(coor,hook) {
+		var circle;
+		var timer;
+		if(!hook){
+			circle = L.circle(coor, 3, {
+				color: 'black',
+				fillColor: '#000000',
+				fillOpacity: 0.8
+			});
+			timer = 50;
+		}else{
+			circle = L.circle(coor, 5, {
+				color: 'red',
+				fillColor: '#ff0000',
+				fillOpacity: 0.5
+			}).bindTooltip("Webhook", { permanent: true, direction:'right' });
+			timer = 50;
+		}
+		addAnimation(circle,timer);
+	}
+
+	for (var i=0; i<mess.length-1; i++){
+		curr=mess[i];
+		next=mess[i+1];
+		division=5;
+		for (var j=0; j<division; j++){
+			lat=(curr.lat*(division-j)+next.lat*j)/division;
+			lng=(curr.lng*(division-j)+next.lng*j)/division;
+			makeWalker([lat,lng],curr.hook);
+		}
+	}
+	showAnimation()
 }
 
 </script>
