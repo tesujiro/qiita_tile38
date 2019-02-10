@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -26,9 +25,7 @@ func newServer() *server {
 }
 
 func (s *server) routes() {
-	s.router.HandleFunc("/", s.handleDefault())
 	s.router.HandleFunc("/webhook", s.handleWebhook())
-	//s.router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./public"))))
 }
 
 func (s *server) handleWebhook() http.HandlerFunc {
@@ -55,13 +52,5 @@ func (s *server) handleWebhook() http.HandlerFunc {
 			return
 		}
 		log.Printf("Request.Body: %v", jsonBody)
-
-		fmt.Fprintf(w, "Hello, World")
-	}
-}
-
-func (s *server) handleDefault() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/webhook", 301)
 	}
 }

@@ -10,11 +10,18 @@ exec_tile38_cli(){
 }
 export -f exec_tile38_cli
 
-commands(){
+set_commands(){
         cat <<EOF | awk 'gsub(/#.*/,"")>=0'
 DROP intruder
 #
 SETHOOK alert $API_ENDPOINT NEARBY intruder FENCE DETECT inside POINT 35.6581 139.6975 100
+SET intruder point:X POINT 35.65949 139.69963
+quit
+EOF
+}
+
+walk_commands(){
+        cat <<EOF | awk 'gsub(/#.*/,"")>=0'
 SET intruder point:X POINT 35.65949 139.69963
 SET intruder point:X POINT 35.65946 139.69947
 SET intruder point:X POINT 35.65944 139.69932
@@ -50,8 +57,13 @@ SET intruder point:X POINT 35.65691 139.69576
 EOF
 }
 
-#commands-2 | tile38-cli
-commands | while read line
+set_commands | while read line
+do
+	exec_tile38_cli "$line"
+done
+
+
+walk_commands | while read line
 do
 	exec_tile38_cli "$line"
 	sleep 0.5
